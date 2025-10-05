@@ -1,25 +1,17 @@
-666LF Win - Demo (arquivo único)
-================================
+666LF Win v3 - Ready for GitHub/Vercel
 
-Conteúdo:
-- index.html : aplicação demo (frontend estática, usa localStorage)
-- README.md : este arquivo
+Estrutura:
+- index.html
+- style.css
+- script.js
+- sounds/ (placeholders)
+- assets/ (logo)
+- README.md
+- vercel.json
 
-Como usar localmente:
-1. Descompacte o ZIP (ex.: `unzip 666lf-demo.zip -d 666lf-demo`)
-2. Abra `index.html` em um navegador moderno (Chrome/Edge/Firefox). Para funcionalidades completas, rode via servidor local:
-   - Python 3: `python -m http.server 8000` (na pasta) e abra http://localhost:8000
-3. Contas:
-   - Admin: email `admin@666lf.win` senha `admin123`
-   - Usuários: qualquer email/ senha — ao registrar, recebe saldo inicial de 1000 créditos
-4. Observações:
-   - Esta é uma DEMO estática: não use com dinheiro real. Todos os jogos são simulados no frontend.
-   - Para subir no Vercel:
-     - Crie um novo projeto e faça o deploy apontando para este repositório / pasta com `index.html`.
-     - Ou faça upload do diretório contendo index.html no Vercel GUI.
-
-Arquitetura:
-- Single file HTML + JS para facilitar testes.
-- Dados persistidos em localStorage (key: lf_users).
-
-Bom teste!
+Instruções:
+1. Coloque os arquivos no repositório GitHub (public).
+2. No Vercel: Add New -> Import Git Repository -> escolha o repositório.
+3. Framework: Other. Deploy.
+Admin login: admin@666lf.win / admin123
+Aviso: Demo estática — não usar para apostas com dinheiro real.

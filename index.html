@@ -4,383 +4,111 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>666LF Win - Demo</title>
-<style>
-:root{
-  --blue:#0066ff;
-  --black:#0b0b0b;
-  --bg:#071020;
-  --card:#0f1724;
-  --glass: rgba(255,255,255,0.03);
-}
-*{box-sizing:border-box;font-family:Inter,Segoe UI,Arial,Helvetica,sans-serif}
-body{margin:0;background:linear-gradient(180deg,var(--bg),#031026);color:#e6eef8}
-.app{display:flex;min-height:100vh}
-.sidebar{width:240px;background:linear-gradient(180deg,var(--black),#070708);padding:18px;display:flex;flex-direction:column;gap:12px}
-.logo{font-weight:800;font-size:20px;color:var(--blue);display:flex;align-items:center;gap:8px}
-.balance{background:var(--card);padding:12px;border-radius:12px;margin-top:8px}
-.menu{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-.btn{background:var(--glass);border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;cursor:pointer}
-.btn.primary{background:linear-gradient(90deg,var(--blue),#4d88ff);color:#fff;border:none}
-.content{flex:1;padding:20px}
-.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.loginBox{max-width:420px;margin:40px auto;padding:20px;background:linear-gradient(180deg,#071024, #051026);border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-.input{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
-.small{font-size:13px;color:#becff6}
-.footer{margin-top:12px;font-size:12px;color:#98aeea}
-.table{width:100%;border-collapse:collapse}
-.table th,.table td{padding:8px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
-.center{text-align:center}
-.controls{display:flex;gap:8px;align-items:center}
-.slot-reels{display:flex;gap:6px;justify-content:center;font-size:28px}
-.big{font-size:22px;font-weight:700}
-.bad{color:#ff7b7b}
-.good{color:#8ef3a7;color:#a6ffbf}
-.footerNote{opacity:0.6;font-size:12px;margin-top:10px}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div id="root"></div>
-<script>
-// ----- Simple Demo App JS -----
-// Portuguese UI. LocalStorage used for users and balances. Admin: admin@666lf.win / admin123
-const APP = {
-  init(){
-    this.state = {user: null, view:'login'};
-    this.load();
-    this.render();
-  },
-  load(){
-    const users = JSON.parse(localStorage.getItem('lf_users')||'{}');
-    this.users = users;
-  },
-  save(){
-    localStorage.setItem('lf_users', JSON.stringify(this.users));
-  },
-  ensureUser(email,password){
-    if(!this.users[email]){
-      this.users[email] = {email,password,name:email.split('@')[0],balance:1000,bets:[]};
-      this.save();
-    }
-    return this.users[email];
-  },
-  auth(email,password){
-    if(email==='admin@666lf.win' && password==='admin123'){
-      this.state.user = {admin:true,email, name:'ADMIN'};
-      this.state.view='admin';
-      return true;
-    }
-    const u = this.users[email];
-    if(u && u.password===password){ this.state.user = u; return true; }
-    return false;
-  },
-  logout(){ this.state.user=null; this.state.view='login'; this.render(); },
-  deposit(user,amt){ user.balance = Math.round((user.balance + amt)*100)/100; this.save(); this.render(); },
-  bet(user,amt,game,info){ amt = Number(amt); if(amt<=0 || amt>user.balance) return null; user.balance -= amt; const bet = {game,amt,info,time:Date.now()}; user.bets.unshift(bet); this.save(); return bet; },
-  payout(user,amt,bet){ user.balance += Math.round(amt*100)/100; this.save(); return user.balance; },
-  render(){
-    const root = document.getElementById('root');
-    if(!this.state.user) return this.renderLogin(root);
-    if(this.state.user.admin) return this.renderAdmin(root);
-    return this.renderApp(root);
-  },
-  renderLogin(root){
-    root.innerHTML = `
-    <div class="loginBox card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="logo">666LF <span style="color:#fff;font-weight:600">Win</span></div>
-          <div class="small">Demo em português — créditos fictícios</div>
-        </div>
-        <div class="big">Saldo demo: <span class="good">1.000</span></div>
-      </div>
-      <hr style="margin:12px 0;border:none;border-top:1px solid rgba(255,255,255,0.03)"/>
-      <div>
-        <label class="small">Email</label>
-        <input id="email" class="input" placeholder="seu@exemplo.com" />
-        <label class="small">Senha</label>
-        <input id="password" class="input" type="password" placeholder="senha" />
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="loginBtn" class="btn primary">Entrar / Registrar</button>
-          <button id="googleBtn" class="btn">Entrar com Google (simulado)</button>
-          <button id="fbBtn" class="btn">Entrar com Facebook (simulado)</button>
-        </div>
-        <div class="footerNote">Conta admin: admin@666lf.win / admin123</div>
-      </div>
-    </div>`;
-    document.getElementById('loginBtn').onclick = ()=>{
-      const e = document.getElementById('email').value.trim().toLowerCase();
-      const p = document.getElementById('password').value || 'demo';
-      if(!e.includes('@')) return alert('Coloque um email válido.');
-      this.ensureUser(e,p);
-      if(this.auth(e,p)){ this.render(); } else { alert('Credenciais inválidas'); }
-    };
-    document.getElementById('googleBtn').onclick = ()=>{
-      const e = 'google_user@666lf.win'; this.ensureUser(e,'google'); this.auth(e,'google'); this.render();
-    };
-    document.getElementById('fbBtn').onclick = ()=>{
-      const e = 'fb_user@666lf.win'; this.ensureUser(e,'facebook'); this.auth(e,'facebook'); this.render();
-    };
-  },
-  renderApp(root){
-    const user = this.state.user;
-    root.innerHTML = `
-      <div class="app">
-        <div class="sidebar">
-          <div class="logo">666LF <span style="color:#fff;font-weight:600">Win</span></div>
-          <div class="balance card">
-            <div class="small">Usuário</div>
-            <div style="font-weight:700">${user.name}</div>
-            <div class="small" style="margin-top:8px">Saldo: <span id="bal" class="big">${user.balance.toFixed(2)}</span> créditos</div>
-          </div>
-          <div class="menu">
-            <button class="btn" onclick="APP.changeView('dashboard')">Painel</button>
-            <button class="btn" onclick="APP.changeView('crash')">Crash</button>
-            <button class="btn" onclick="APP.changeView('mines')">Mines</button>
-            <button class="btn" onclick="APP.changeView('roleta')">Roleta</button>
-            <button class="btn" onclick="APP.changeView('coin')">Coin Flip</button>
-            <button class="btn" onclick="APP.changeView('double')">Double</button>
-            <button class="btn" onclick="APP.changeView('slots')">Slots</button>
-            <button class="btn" onclick="APP.changeView('history')">Histórico</button>
-            <button class="btn" onclick="APP.logout()">Sair</button>
-          </div>
-          <div class="footer">Demo - Não use dinheiro real</div>
-        </div>
-        <div class="content">
-          <div class="header">
-            <div><strong>${user.name}</strong> — ${user.email}</div>
-            <div class="controls"><input id="betInput" class="input" style="width:110px" placeholder="Aposta (ex: 50)"/><button class="btn primary" onclick="APP.quickTopUp()">Top up +100</button></div>
-          </div>
-          <div id="mainArea"></div>
-        </div>
-      </div>`;
-    this.changeView(this.state.view||'dashboard');
-    document.getElementById('bal').innerText = user.balance.toFixed(2);
-  },
-  changeView(v){
-    this.state.view = v;
-    const area = document.getElementById('mainArea');
-    if(!area) return;
-    if(v==='dashboard') return this.renderDashboard(area);
-    if(v==='crash') return this.renderCrash(area);
-    if(v==='mines') return this.renderMines(area);
-    if(v==='roleta') return this.renderRoleta(area);
-    if(v==='coin') return this.renderCoin(area);
-    if(v==='double') return this.renderDouble(area);
-    if(v==='slots') return this.renderSlots(area);
-    if(v==='history') return this.renderHistory(area);
-    area.innerHTML = '<div>View not found</div>';
-  },
-  quickTopUp(){ const user=this.state.user; this.deposit(user,100); alert('Adicionados +100 créditos (demo)'); this.render(); },
-  renderDashboard(area){
-    area.innerHTML = `<div class="grid">
-      <div class="card">
-        <div class="big">Painel</div>
-        <div class="small">Jogos disponíveis</div>
-        <div style="margin-top:8px" class="controls">
-          <button class="btn" onclick="APP.changeView('crash')">Ir para Crash</button>
-          <button class="btn" onclick="APP.changeView('mines')">Ir para Mines</button>
-          <button class="btn" onclick="APP.changeView('roleta')">Ir para Roleta</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="big">Histórico rápido</div>
-        <div id="miniHistory" class="small" style="margin-top:8px"></div>
-      </div>
-      <div class="card">
-        <div class="big">Regras</div>
-        <div class="small" style="margin-top:8px">Créditos fictícios. Jogos simulados. Não use dinheiro real aqui.</div>
-      </div>
-    </div>`;
-    const h = this.state.user.bets.slice(0,6).map(b=>`<div class="small">${new Date(b.time).toLocaleString()} - ${b.game} - ${b.amt} créditos</div>`).join('');
-    document.getElementById('miniHistory').innerHTML = h || '<div class="small">Sem apostas ainda</div>';
-  },
-  renderHistory(area){
-    const rows = this.state.user.bets.map(b=>`<tr><td>${new Date(b.time).toLocaleString()}</td><td>${b.game}</td><td>${b.amt}</td><td>${JSON.stringify(b.info||'')}</td></tr>`).join('');
-    area.innerHTML = `<div class="card"><div class="big">Histórico completo</div><table class="table" style="margin-top:8px"><thead><tr><th>Data</th><th>Jogo</th><th>Aposta</th><th>Info</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  },
-  // ---------- GAMES ----------
-  renderCrash(area){
-    area.innerHTML = `<div class="card"><div class="big">Crash</div><div class="small">Clique em "Apostar" e saque antes do crash.</div>
-      <div style="margin-top:12px" id="crashMul" class="big">1.00x</div>
-      <div style="margin-top:10px" class="controls"><input id="crashBet" class="input" style="width:120px" placeholder="Aposta"/><button class="btn primary" onclick="APP.startCrash()">Apostar</button><button class="btn" onclick="APP.cashout()">Sacar</button></div>
-      <div id="crashLog" style="margin-top:10px" class="small"></div></div>`;
-    this.crashRunning = false; this.crashValue = 1; this.crashInterval = null; this.crashTarget = this.rnd(1.2, 8);
-  },
-  startCrash(){
-    if(this.crashRunning) return alert('Rodada em andamento');
-    const betAmt = Number(document.getElementById('crashBet').value);
-    const user = this.state.user;
-    if(!betAmt || betAmt<=0 || betAmt>user.balance) return alert('Aposta inválida');
-    const bet = this.bet(user,betAmt,'Crash',{status:'running'});
-    this.crashRunning = true; this.crashValue = 1; this.crashTarget = this.rnd(1.2,8);
-    document.getElementById('crashLog').innerText = 'Rodada iniciada. Crash target: ' + this.crashTarget.toFixed(2) + 'x (simulado)';
-    this.crashInterval = setInterval(()=>{ this.crashValue += this.crashValue*0.05; document.getElementById('crashMul').innerText = this.crashValue.toFixed(2)+'x'; if(this.crashValue>=this.crashTarget){ clearInterval(this.crashInterval); this.crashRunning=false; document.getElementById('crashLog').innerText='EXPLODIU em '+this.crashValue.toFixed(2)+'x — perdeu'; this.save(); }}, 120);
-  },
-  cashout(){
-    if(!this.crashRunning) return alert('Nada em andamento');
-    clearInterval(this.crashInterval); this.crashRunning=false;
-    const mul = this.crashValue;
-    const u = this.state.user;
-    // find last running bet
-    const bet = u.bets.find(b=>b.game==='Crash' && b.info && b.info.status==='running');
-    if(!bet) return;
-    const win = bet.amt * mul;
-    bet.info.status='cashed'; bet.info.mul=mul; bet.info.win=win;
-    this.payout(u,win);
-    document.getElementById('crashLog').innerText = 'Saque! Multiplicador: '+mul.toFixed(2)+'x — Ganhou '+win.toFixed(2)+' créditos';
-    this.render();
-  },
-  renderMines(area){
-    this.minesSize=5; this.minesCount=3;
-    area.innerHTML = `<div class="card"><div class="big">Mines</div>
-      <div class="small">Clique em células sem minas para ganhar. Clique em mina => perde.</div>
-      <div style="margin-top:10px" class="controls"><input id="minesBet" class="input" style="width:120px" placeholder="Aposta"/><button class="btn primary" onclick="APP.startMines()">Iniciar</button></div>
-      <div id="mineBoard" style="margin-top:12px"></div></div>`;
-  },
-  startMines(){
-    const betAmt = Number(document.getElementById('minesBet').value);
-    const u=this.state.user;
-    if(!betAmt || betAmt<=0 || betAmt>u.balance) return alert('Aposta inválida');
-    const bet = this.bet(u,betAmt,'Mines',{status:'playing',safe:0});
-    // generate board
-    const size=this.minesSize, mines=this.minesCount;
-    const coords = new Set(); while(coords.size<mines) coords.add(Math.floor(Math.random()*size*size));
-    const board = {size,mines,coords:Array.from(coords)};
-    bet.info.board=board;
-    this.save(); this.render(); this.renderMinesBoard(board, u);
-  },
-  renderMinesBoard(board, user){
-    const el = document.getElementById('mineBoard');
-    let html='<div style="display:grid;grid-template-columns:repeat('+board.size+',42px);gap:6px">';
-    for(let i=0;i<board.size*board.size;i++){
-      html+=`<button class="btn" style="width:42px;height:42px;padding:0" onclick="APP.pickMine(${i})">?</button>`;
-    }
-    html+='</div>';
-    el.innerHTML = html;
-  },
-  pickMine(i){
-    const u=this.state.user;
-    const bet = u.bets.find(b=>b.game==='Mines' && b.info && b.info.status==='playing');
-    if(!bet) return;
-    if(bet.info.board.coords.includes(i)){
-      bet.info.status='lost';
-      this.save();
-      alert('BOOOM! Mina! Você perdeu a aposta.');
-      this.render();
-      return;
-    }
-    bet.info.safe++;
-    // payout increases slightly per safe
-    const win = bet.amt * (1 + bet.info.safe*0.5);
-    bet.info.win = win;
-    this.payout(u,0); // no immediate payout
-    this.save();
-    if(bet.info.safe>= (bet.info.board.size-1)){
-      bet.info.status='won';
-      this.payout(u,win);
-      alert('Você limpou o campo e ganhou '+win.toFixed(2)+' créditos');
-      this.render();
-      return;
-    }
-    this.render();
-  },
-  renderRoleta(area){
-    area.innerHTML = `<div class="card"><div class="big">Roleta</div><div class="small">Aposte em 1-36 ou color (red/black). Payout simples.</div>
-      <div style="margin-top:8px" class="controls"><input id="roletaBet" class="input" style="width:110px" placeholder="Aposta"/><input id="roletaChoice" class="input" style="width:120px" placeholder="Ex: red or 17"/><button class="btn primary" onclick="APP.spinRoleta()">Girar</button></div>
-      <div id="roletaRes" style="margin-top:10px" class="small"></div></div>`;
-  },
-  spinRoleta(){
-    const amt = Number(document.getElementById('roletaBet').value); const choice = document.getElementById('roletaChoice').value.trim().toLowerCase();
-    const u=this.state.user; if(!amt||amt<=0||amt>u.balance) return alert('Aposta inválida');
-    const bet=this.bet(u,amt,'Roleta',{choice});
-    const spun = Math.floor(Math.random()*36)+1; const color = spun%2? 'red':'black';
-    let win=0;
-    if(choice==='red' || choice==='black'){ if(choice===color) win=amt*2; }
-    else{ const num = parseInt(choice); if(num===spun) win=amt*36; }
-    if(win>0){ bet.info.win=win; this.payout(u,win); document.getElementById('roletaRes').innerText=`Saiu ${spun} (${color}). Você ganhou ${win.toFixed(2)}.`; } else { document.getElementById('roletaRes').innerText=`Saiu ${spun} (${color}). Perdeu.`; }
-    this.render();
-  },
-  renderCoin(area){
-    area.innerHTML = `<div class="card"><div class="big">Coin Flip</div><div class="small">Escolha cara ou coroa.</div>
-      <div style="margin-top:8px" class="controls"><input id="coinBet" class="input" style="width:110px" placeholder="Aposta"/><input id="coinChoice" class="input" style="width:120px" placeholder="cara/coroa"/><button class="btn primary" onclick="APP.flipCoin()">Jogar</button></div><div id="coinRes" class="small" style="margin-top:8px"></div></div>`;
-  },
-  flipCoin(){
-    const amt = Number(document.getElementById('coinBet').value); const choice=document.getElementById('coinChoice').value.trim().toLowerCase();
-    const u=this.state.user; if(!amt||amt<=0||amt>u.balance) return alert('Aposta inválida'); if(!['cara','coroa'].includes(choice)) return alert('Escolha cara ou coroa');
-    const bet = this.bet(u,amt,'Coin',{choice});
-    const res = Math.random()<0.5? 'cara':'coroa';
-    if(res===choice){ this.payout(u,amt*2); document.getElementById('coinRes').innerText=`Saiu ${res}. Você ganhou ${ (amt*2).toFixed(2) }`; } else { document.getElementById('coinRes').innerText=`Saiu ${res}. Perdeu.`; }
-    this.render();
-  },
-  renderDouble(area){
-    area.innerHTML = `<div class="card"><div class="big">Double</div><div class="small">Escolha alto (>=50) ou baixo (&lt;50) on random 0-99.</div>
-      <div style="margin-top:8px" class="controls"><input id="doubleBet" class="input" style="width:110px" placeholder="Aposta"/><input id="doubleChoice" class="input" style="width:120px" placeholder="alto/baixo"/><button class="btn primary" onclick="APP.playDouble()">Jogar</button></div><div id="doubleRes" class="small" style="margin-top:8px"></div></div>`;
-  },
-  playDouble(){
-    const amt = Number(document.getElementById('doubleBet').value); const choice=document.getElementById('doubleChoice').value.trim().toLowerCase();
-    const u=this.state.user; if(!amt||amt<=0||amt>u.balance) return alert('Aposta inválida'); if(!['alto','baixo'].includes(choice)) return alert('Escolha alto ou baixo');
-    const bet=this.bet(u,amt,'Double',{choice});
-    const n = Math.floor(Math.random()*100);
-    const win = (choice==='alto' && n>=50) || (choice==='baixo' && n<50) ? amt*2 : 0;
-    if(win) { this.payout(u,win); document.getElementById('doubleRes').innerText=`Número ${n}. Você ganhou ${win.toFixed(2)}`; } else { document.getElementById('doubleRes').innerText=`Número ${n}. Perdeu.`; }
-    this.render();
-  },
-  renderSlots(area){
-    area.innerHTML = `<div class="card"><div class="big">Slots</div><div class="small">Três rolos. Símbolos: 7,🍒,⭐. Combos pagam.</div>
-      <div style="margin-top:8px" class="controls"><input id="slotsBet" class="input" style="width:110px" placeholder="Aposta"/><button class="btn primary" onclick="APP.spinSlots()">Girar</button></div>
-      <div id="slotsRes" style="margin-top:10px" class="small"></div><div id="reels" style="margin-top:10px" class="slot-reels"></div></div>`;
-  },
-  spinSlots(){
-    const amt = Number(document.getElementById('slotsBet').value); const u=this.state.user;
-    if(!amt||amt<=0||amt>u.balance) return alert('Aposta inválida');
-    const bet = this.bet(u,amt,'Slots',{});
-    const symbols = ['7','🍒','⭐'];
-    const a = symbols[Math.floor(Math.random()*symbols.length)];
-    const b = symbols[Math.floor(Math.random()*symbols.length)];
-    const c = symbols[Math.floor(Math.random()*symbols.length)];
-    document.getElementById('reels').innerText = a + '  ' + b + '  ' + c;
-    let win=0;
-    if(a===b && b===c){ if(a==='7') win=amt*50; else if(a==='🍒') win=amt*10; else win=amt*5; }
-    else if(a===b || b===c || a===c) win=amt*2;
-    if(win){ bet.info.win=win; this.payout(u,win); document.getElementById('slotsRes').innerText=`Combinação! Ganhou ${win.toFixed(2)} créditos`; } else { document.getElementById('slotsRes').innerText='Sem combinação. Perdeu.'; }
-    this.render();
-  },
-  renderAdmin(root){
-    // build users table
-    const users = this.users;
-    let rows='';
-    for(const k of Object.keys(users)){
-      const u=users[k];
-      rows += `<tr><td>${u.email}</td><td>${u.name}</td><td>${u.balance.toFixed(2)}</td><td>${u.bets.length}</td></tr>`;
-    }
-    root.innerHTML = `<div style="padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div class="logo">666LF <span style="color:#fff;font-weight:600">Win</span></div><div class="small">Painel administrador (demo)</div></div>
-        <div><button class="btn" onclick="APP.logout()">Sair</button></div>
-      </div>
-      <div style="margin-top:12px" class="card">
-        <div class="big">Usuários</div>
-        <table class="table" style="margin-top:8px"><thead><tr><th>Email</th><th>Nome</th><th>Saldo</th><th>#Apostas</th></tr></thead><tbody>${rows}</tbody></table>
-      </div>
-      <div style="margin-top:12px" class="card">
-        <div class="big">Ações</div>
-        <div style="margin-top:8px" class="controls">
-          <input id="admEmail" class="input" placeholder="email usuário"/><input id="admAmt" class="input" placeholder="quantia"/><button class="btn primary" onclick="APP.adminTopUp()">Adicionar saldo</button>
-        </div>
-      </div>
-    </div>`;
-  },
-  adminTopUp(){
-    const e=document.getElementById('admEmail').value.trim().toLowerCase(); const amt=Number(document.getElementById('admAmt').value);
-    if(!this.users[e]) return alert('Usuário não encontrado');
-    this.users[e].balance += amt; this.save(); alert('Saldo adicionado'); this.render();
-  },
-  rnd(min,max){ return Math.random()*(max-min)+min; }
-};
+<div id="preloader" class="preloader">
+  <div class="logo-anim">
+    <!-- Simple SVG animated flame logo -->
+    <svg id="flameLogo" width="220" height="120" viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gA" x1="0" x2="1"><stop offset="0" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff5b3a"/></linearGradient>
+      </defs>
+      <rect width="220" height="120" rx="12" fill="#071021"/>
+      <g transform="translate(14,18)">
+        <text x="0" y="70" font-family="Inter, Arial" font-size="60" font-weight="800" fill="#ffffff">666</text>
+        <g id="flame" transform="translate(100,0)">
+          <path d="M10 60 C20 40, 30 20, 20 5 C40 25, 55 25, 60 5 C50 30, 40 40, 30 60 Z" fill="url(#gA)">
+            <animate attributeName="d" dur="1.6s" repeatCount="indefinite"
+              values="M10 60 C20 40, 30 20, 20 5 C40 25, 55 25, 60 5 C50 30, 40 40, 30 60 Z;
+                      M10 60 C18 38, 32 18, 24 6 C44 28, 56 22, 62 6 C52 34, 38 44, 30 60 Z;
+                      M10 60 C20 40, 30 20, 20 5 C40 25, 55 25, 60 5 C50 30, 40 40, 30 60 Z"/>
+          </path>
+        </g>
+        <text x="120" y="70" font-family="Inter, Arial" font-size="28" font-weight="800" fill="#00a2ff">LF Win</text>
+      </g>
+    </svg>
+  </div>
+  <div class="loading-text">Entrando na 666LF Win... 💎 Aguarde um instante, campeão!</div>
+</div>
 
-APP.init();
-</script>
+<div id="app" class="app hidden">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="logoRow">
+      <div class="logoBox" id="logoBox"></div>
+      <div>
+        <div class="logoTitle">666LF <span class="accent">Win</span></div>
+        <div class="small">Cassino Demo</div>
+      </div>
+    </div>
+    <div class="balance card">
+      <div class="small">Usuário</div>
+      <div id="userName" class="userName">Convidado</div>
+      <div class="small">Saldo: <span id="bal">1000</span> coins</div>
+    </div>
+    <nav class="menu">
+      <button class="btn" data-view="dashboard">Painel</button>
+      <button class="btn" data-view="crash">Crash</button>
+      <button class="btn" data-view="slots">Slots</button>
+      <button class="btn" data-view="roleta">Roleta</button>
+      <button class="btn" data-view="history">Histórico</button>
+      <button class="btn danger" id="logoutBtn">Sair</button>
+    </nav>
+    <div class="footer">Demo - Não use dinheiro real</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <header class="header">
+      <div class="header-left">
+        <div id="topUser" class="topUser">Bem-vindo, <b id="topName">Convidado</b></div>
+        <div class="topBalance">Saldo: <b id="topBal">1000</b> coins</div>
+      </div>
+      <div class="header-right">
+        <input id="quickBet" placeholder="Aposta ex: 50" />
+        <button class="btn primary" id="topUp">+100</button>
+      </div>
+    </header>
+
+    <section id="mainArea" class="mainArea"></section>
+  </main>
+
+  <!-- Chat WhatsApp fake -->
+  <div id="chatBtn" class="chatBtn">WA</div>
+  <div id="chatBubble" class="chatBubble hidden">
+    <div class="chatHeader">
+      <div><strong>Suporte 666LF</strong><div class="small">WhatsApp (demo)</div></div>
+      <div id="closeChat" class="closeX">✖</div>
+    </div>
+    <div id="chatMessages" class="chatMessages">
+      <div class="msg bot">👋 Olá! Bem-vindo à 666LF Win 🔥<br/>Como posso te ajudar hoje, campeão?</div>
+    </div>
+    <div class="chatInput">
+      <input id="chatInput" placeholder="Escreve aqui..." />
+      <button class="btn primary" id="sendChat">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Login / Register modal -->
+<div id="authModal" class="modal">
+  <div class="modalContent card">
+    <h3 id="authTitle">Entrar</h3>
+    <div class="authBody">
+      <div class="field"><label>Email</label><input id="authEmail" /></div>
+      <div class="field"><label>Senha</label><input id="authPass" type="password" /></div>
+      <div class="field"><label>Nome (apenas registrar)</label><input id="authName" /></div>
+      <div class="authButtons">
+        <button class="btn primary" id="signinBtn">Entrar</button>
+        <button class="btn" id="registerBtn">Registrar</button>
+        <button class="btn" id="closeAuth">Fechar</button>
+      </div>
+      <div class="small">Admin demo: admin@666lf.win / admin123</div>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
 </body>
 </html>
