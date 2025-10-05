@@ -1,18 +1,15 @@
-666LF Win v4 - PT-BR - Ready for GitHub/Vercel
+666LF Win v5 - Visual-only (PT-BR)
 
 Conteúdo:
 - index.html
 - style.css
 - script.js
-- sounds/ (placeholders, substitua por .mp3 reais se quiser)
-- assets/ (logo)
+- assets/ (logo placeholder)
 - README.md
 - vercel.json
 
-Como publicar:
-1. Faça upload dos arquivos para um repositório público no GitHub.
-2. No Vercel: Add New → Import Git Repository → escolha o repositório.
-3. Framework: Other → Deploy.
-
+Observações:
+- Visual finalizado: fundo azul-escuro/preto, logo com chamas animadas (SVG), animações nos jogos (Crash, Slots, Roleta) e transições suaves.
+- Não há sons (visual-only) conforme solicitado.
+- Para publicar: faça upload dos arquivos no repositório GitHub e redeploy no Vercel (Framework: Other).
 Admin demo: admin@666lf.win / admin123
-Aviso: DEMO estática — não usar para apostas com dinheiro real.
